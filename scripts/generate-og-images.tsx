@@ -1,15 +1,15 @@
 /* eslint-disable react-refresh/only-export-components */
 
-import fs from "node:fs/promises"
-import path from "node:path"
-import { fileURLToPath } from "node:url"
-import { Resvg } from "@resvg/resvg-js"
+import fs from "node:fs/promises";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { Resvg } from "@resvg/resvg-js";
 // biome-ignore lint/correctness/noUnusedImports: We actually need it, liar.
-import React from "react"
-import satori from "satori"
-import { examplesManifest } from "../src/lib/examples-manifest.js"
+import React from "react";
+import satori from "satori";
+import { examplesManifest } from "../src/lib/examples-manifest.js";
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url))
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // No need for createExampleId anymore - we use the id from meta
 
@@ -19,9 +19,9 @@ function OGImage({
   name,
   variant,
 }: {
-  name: string
-  variant?: string
-  description: string
+  name: string;
+  variant?: string;
+  description: string;
 }) {
   return (
     <div
@@ -123,50 +123,66 @@ function OGImage({
           borderTop: "1px solid #374151",
         }}
       >
-        <div style={{ color: "#6b7280", fontSize: 20 }}>Interactive Effect Examples</div>
-        <div style={{ color: "#6b7280", fontSize: 20 }}>effect.kitlangton.com</div>
+        <div style={{ color: "#6b7280", fontSize: 20 }}>
+          Interactive Effect Examples
+        </div>
+        <div style={{ color: "#6b7280", fontSize: 20 }}>
+          effect.kitlangton.com
+        </div>
       </div>
     </div>
-  )
+  );
 }
 
 async function generateOGImages() {
-  console.log("🎨 Generating Open Graph images...")
+  console.log("🎨 Generating Open Graph images...");
 
   // Ensure output directory exists
-  const outputDir = path.join(__dirname, "..", "public", "og")
-  await fs.mkdir(outputDir, { recursive: true })
+  const outputDir = path.join(__dirname, "..", "public", "og");
+  await fs.mkdir(outputDir, { recursive: true });
 
   // Load font
-  const interBoldPath = path.join(__dirname, "..", "public", "fonts", "Inter-Bold.ttf")
-  const interRegularPath = path.join(__dirname, "..", "public", "fonts", "Inter-Regular.ttf")
+  const interBoldPath = path.join(
+    __dirname,
+    "..",
+    "public",
+    "fonts",
+    "Inter-Bold.ttf",
+  );
+  const interRegularPath = path.join(
+    __dirname,
+    "..",
+    "public",
+    "fonts",
+    "Inter-Regular.ttf",
+  );
 
   // Check if fonts exist, if not, download them
-  let interBold: ArrayBuffer
-  let interRegular: ArrayBuffer
+  let interBold: ArrayBuffer;
+  let interRegular: ArrayBuffer;
 
   try {
-    const boldBuffer = await fs.readFile(interBoldPath)
-    const regularBuffer = await fs.readFile(interRegularPath)
+    const boldBuffer = await fs.readFile(interBoldPath);
+    const regularBuffer = await fs.readFile(interRegularPath);
     interBold = boldBuffer.buffer.slice(
       boldBuffer.byteOffset,
       boldBuffer.byteOffset + boldBuffer.byteLength,
-    ) as ArrayBuffer
+    ) as ArrayBuffer;
     interRegular = regularBuffer.buffer.slice(
       regularBuffer.byteOffset,
       regularBuffer.byteOffset + regularBuffer.byteLength,
-    ) as ArrayBuffer
+    ) as ArrayBuffer;
   } catch {
-    console.log("⚠️  Fonts not found locally, using system fonts as fallback")
+    console.log("⚠️  Fonts not found locally, using system fonts as fallback");
     // Use a minimal font as fallback
-    interBold = new ArrayBuffer(0)
-    interRegular = new ArrayBuffer(0)
+    interBold = new ArrayBuffer(0);
+    interRegular = new ArrayBuffer(0);
   }
 
   // Generate all images in parallel
-  const imagePromises = examplesManifest.map(async example => {
-    const id = example.id
-    console.log(`  📸 Generating ${id}.png`)
+  const imagePromises = examplesManifest.map(async (example) => {
+    const id = example.id;
+    console.log(`  📸 Generating ${id}.png`);
 
     try {
       const svg = await satori(
@@ -196,40 +212,40 @@ async function generateOGImages() {
                 ]
               : [],
         },
-      )
+      );
 
       const resvg = new Resvg(svg, {
         fitTo: {
           mode: "width",
           value: 1200,
         },
-      })
+      });
 
-      const pngData = resvg.render()
-      const pngBuffer = pngData.asPng()
+      const pngData = resvg.render();
+      const pngBuffer = pngData.asPng();
 
-      await fs.writeFile(path.join(outputDir, `${id}.png`), pngBuffer)
+      await fs.writeFile(path.join(outputDir, `${id}.png`), pngBuffer);
 
-      return { id, success: true }
+      return { id, success: true };
     } catch (error) {
-      console.error(`  ❌ Failed to generate ${id}.png:`, error)
-      return { id, success: false, error }
+      console.error(`  ❌ Failed to generate ${id}.png:`, error);
+      return { id, success: false, error };
     }
-  })
+  });
 
   // Wait for all images to complete
-  const results = await Promise.allSettled(imagePromises)
+  const results = await Promise.allSettled(imagePromises);
 
   // Count successes and failures
-  const completed = results.filter(r => r.status === "fulfilled").length
-  const failed = results.filter(r => r.status === "rejected").length
+  const completed = results.filter((r) => r.status === "fulfilled").length;
+  const failed = results.filter((r) => r.status === "rejected").length;
 
   if (failed > 0) {
-    console.log(`⚠️  ${failed} images failed to generate`)
+    console.log(`⚠️  ${failed} images failed to generate`);
   }
 
-  console.log(`✅ Generated ${completed} Open Graph images successfully`)
+  console.log(`✅ Generated ${completed} Open Graph images successfully`);
 }
 
 // Run the script
-generateOGImages().catch(console.error)
+generateOGImages().catch(console.error);
